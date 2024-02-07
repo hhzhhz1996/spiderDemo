@@ -1,13 +1,26 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+import argparse
 
 # 替换为要爬取的网页URL
-home_url = ("https://www.bigbigwork.com/wh/w1.html?t=dz&utm_source=baidu&utm_medium=sem"
+default_url = ("https://www.bigbigwork.com/wh/w1.html?t=dz&utm_source=baidu&utm_medium=sem"
             "&utm_campaign=%28免%29-Gratisography&utm_content=核心词"
             "&utm_term=gratisography&bd_vid=8667216400394607439")
+default_path = os.path.expanduser('~/Desktop/')
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-u', '--url', type=str, default=default_url, help='网址')
+parser.add_argument('-p', '--path', type=str, default=default_path, help='保存路径')
+args = parser.parse_args()
+
 # 图片保存路径
-dir_path = os.path.expanduser('~/Desktop/img/')
+dir_path = os.path.join(args.path if args.path else default_path, 'img')
+home_url = args.url if args.url else default_url
+
+print(dir_path)
+print(home_url)
 
 
 def save_path_check(dir_path: str):
@@ -33,6 +46,17 @@ def get_img_url(url: str):
 
     except requests.RequestException as e:
         print("Error:", str(e))
+
+
+def download_images(links, save_path: str):
+    count = 1
+    for idx, link in enumerate(links):
+        suffix = get_suffix(link)
+        if suffix != '.jpg':
+            continue
+        file_name = str(count) + suffix
+        count += 1
+        download_image(url_format(link), os.path.join(save_path, file_name))
 
 
 def download_image(url, save_path: str):
@@ -72,13 +96,5 @@ if __name__ == "__main__":
 
     # 路径检查
     save_path_check(dir_path)
-
     links = get_img_url(home_url)
-    count = 1
-    for idx, link in enumerate(links):
-        suffix = get_suffix(link)
-        if suffix != '.jpg':
-            continue
-        file_name = str(count) + suffix
-        count += 1
-        download_image(url_format(link), os.path.join(dir_path, file_name))
+    download_images(links, dir_path)
